@@ -62,7 +62,7 @@ final class MainWindowController: NSWindowController {
     private func createFile(in folder: ImportedFolder) {
         guard let folderURL = FolderStore.shared.resolveURL(for: folder) else { return }
         let newURL = TextFileManager.uniqueFileURL(in: folderURL)
-        guard TextFileManager.createFile(at: newURL) else { return }
+        guard TextFileManager.createFile(at: newURL, in: folderURL) else { return }
         contentVC.showGrid(for: folder)
         contentVC.openFile(at: newURL)
     }

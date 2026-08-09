@@ -55,7 +55,7 @@ final class ContentViewController: NSViewController {
         guard let folder = currentFolder else { return }
         emptyStateLabel.isHidden = true
         embed(editorVC)
-        editorVC.open(url: url, folderName: folder.name)
+        editorVC.open(url: url, folder: folder)
     }
 
     func flushPendingSave() {

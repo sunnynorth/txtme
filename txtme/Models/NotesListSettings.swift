@@ -12,6 +12,7 @@ final class NotesListSettings {
     var useNvaltStyle: Bool {
         didSet {
             UserDefaults.standard.set(useNvaltStyle, forKey: styleKey)
+            UserDefaults.standard.synchronize()
             NotificationCenter.default.post(name: .notesListStyleChanged, object: nil)
         }
     }

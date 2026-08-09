@@ -42,7 +42,12 @@ final class EditorViewController: NSViewController {
     private let textView = NSTextView()
 
     private var fileURL: URL?
+    private var folder: ImportedFolder?
     private var saveTimer: Timer?
+
+    private var resolvedFolderURL: URL? {
+        folder.flatMap { FolderStore.shared.resolveURL(for: $0) }
+    }
 
     private static let statusFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -147,11 +152,12 @@ final class EditorViewController: NSViewController {
         textView.font = EditorSettings.shared.effectiveFont
     }
 
-    func open(url: URL, folderName: String) {
+    func open(url: URL, folder: ImportedFolder) {
         flushPendingSave()
         fileURL = url
-        folderLabel.stringValue = folderName
-        textView.string = TextFileManager.read(url)
+        self.folder = folder
+        folderLabel.stringValue = folder.name
+        textView.string = resolvedFolderURL.map { TextFileManager.read(url, in: $0) } ?? ""
         let modDate = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
         updateStatus(date: modDate)
         view.window?.makeFirstResponder(textView)
@@ -172,8 +178,8 @@ final class EditorViewController: NSViewController {
     private func saveNow() {
         saveTimer?.invalidate()
         saveTimer = nil
-        guard let fileURL else { return }
-        TextFileManager.write(textView.string, to: fileURL)
+        guard let fileURL, let folderURL = resolvedFolderURL else { return }
+        TextFileManager.write(textView.string, to: fileURL, in: folderURL)
         updateStatus(date: Date())
     }
 

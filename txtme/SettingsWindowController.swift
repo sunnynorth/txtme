@@ -83,6 +83,13 @@ final class SettingsWindowController: NSWindowController {
         ])
 
         window.contentView = container
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(settingsChanged),
+            name: .editorSettingsChanged,
+            object: nil
+        )
     }
 
     private func makeSectionLabel(_ text: String) -> NSTextField {
@@ -106,17 +113,18 @@ final class SettingsWindowController: NSWindowController {
     }
 
     @objc private func selectFontTapped() {
-        let fontManager = NSFontManager.shared
-        fontManager.target = self
-        fontManager.action = #selector(changeFont(_:))
-        fontManager.setSelectedFont(EditorSettings.shared.font, isMultiple: false)
-        fontManager.orderFrontFontPanel(self)
+        // Deliberately not setting NSFontManager.target/action here: once the Font Panel
+        // becomes key window, AppKit re-syncs the font manager's target to match the new
+        // key window's context, silently clobbering an explicit target set beforehand.
+        // Letting changeFont: flow through the normal responder chain (handled in
+        // AppDelegate) is the reliable way to receive the selection.
+        NSFontManager.shared.setSelectedFont(EditorSettings.shared.font, isMultiple: false)
+        NSFontManager.shared.orderFrontFontPanel(self)
     }
 
-    @objc func changeFont(_ sender: Any?) {
-        guard let fontManager = sender as? NSFontManager else { return }
-        EditorSettings.shared.font = fontManager.convert(EditorSettings.shared.font)
+    @objc private func settingsChanged() {
         updateFontLabel()
+        boldCheckbox.state = EditorSettings.shared.isBold ? .on : .off
     }
 
     @objc func openSettings(_ sender: Any?) {

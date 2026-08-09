@@ -51,39 +51,44 @@ enum TextFileManager {
         }
     }
 
+    // Every operation below takes the actual security-scoped folder URL (resolved from the
+    // saved bookmark via FolderStore) rather than deriving one with `url.deletingLastPathComponent()`.
+    // A derived plain URL doesn't carry the sandbox's security-scope token, so
+    // `startAccessingSecurityScopedResource()` on it is a silent no-op: the file operation
+    // then fails under App Sandbox and gets masked by `try?`, returning empty/no-op results.
+
     @discardableResult
-    static func createFile(at url: URL) -> Bool {
-        withSecurityScopedAccess(to: url.deletingLastPathComponent()) {
+    static func createFile(at url: URL, in folderURL: URL) -> Bool {
+        withSecurityScopedAccess(to: folderURL) {
             FileManager.default.createFile(atPath: url.path, contents: Data())
         }
     }
 
-    static func deleteFile(at url: URL) {
-        withSecurityScopedAccess(to: url.deletingLastPathComponent()) {
+    static func deleteFile(at url: URL, in folderURL: URL) {
+        withSecurityScopedAccess(to: folderURL) {
             try? FileManager.default.removeItem(at: url)
         }
     }
 
-    static func read(_ url: URL) -> String {
-        withSecurityScopedAccess(to: url.deletingLastPathComponent()) {
+    static func read(_ url: URL, in folderURL: URL) -> String {
+        withSecurityScopedAccess(to: folderURL) {
             (try? String(contentsOf: url, encoding: .utf8)) ?? ""
         }
     }
 
-    static func write(_ text: String, to url: URL) {
-        withSecurityScopedAccess(to: url.deletingLastPathComponent()) {
+    static func write(_ text: String, to url: URL, in folderURL: URL) {
+        withSecurityScopedAccess(to: folderURL) {
             try? text.write(to: url, atomically: true, encoding: .utf8)
         }
     }
 
-    /// Renames the file at `url` to `newBaseName`.txt within the same folder, returning the new URL if successful.
-    static func rename(_ url: URL, to newBaseName: String) -> URL? {
+    /// Renames the file at `url` to `newBaseName`.txt within `folderURL`, returning the new URL if successful.
+    static func rename(_ url: URL, to newBaseName: String, in folderURL: URL) -> URL? {
         let trimmed = newBaseName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
-        let folder = url.deletingLastPathComponent()
-        let newURL = folder.appendingPathComponent("\(trimmed).txt")
+        let newURL = folderURL.appendingPathComponent("\(trimmed).txt")
         guard newURL != url else { return url }
-        return withSecurityScopedAccess(to: folder) {
+        return withSecurityScopedAccess(to: folderURL) {
             guard !FileManager.default.fileExists(atPath: newURL.path) else { return nil }
             do {
                 try FileManager.default.moveItem(at: url, to: newURL)

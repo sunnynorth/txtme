@@ -146,7 +146,7 @@ final class NotesListViewController: NSViewController {
     }
 
     private func promptRename(_ item: TextFileItem) {
-        guard let window = view.window else { return }
+        guard let window = view.window, let folder, let folderURL = FolderStore.shared.resolveURL(for: folder) else { return }
         let alert = NSAlert()
         alert.messageText = "Rename File"
         alert.addButton(withTitle: "Rename")
@@ -158,14 +158,14 @@ final class NotesListViewController: NSViewController {
 
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
-            if TextFileManager.rename(item.url, to: field.stringValue) != nil {
+            if TextFileManager.rename(item.url, to: field.stringValue, in: folderURL) != nil {
                 self.reload()
             }
         }
     }
 
     private func confirmDelete(_ item: TextFileItem) {
-        guard let window = view.window else { return }
+        guard let window = view.window, let folder, let folderURL = FolderStore.shared.resolveURL(for: folder) else { return }
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = "Delete \u{201C}\(item.name)\u{201D}?"
@@ -175,7 +175,7 @@ final class NotesListViewController: NSViewController {
 
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
-            TextFileManager.deleteFile(at: item.url)
+            TextFileManager.deleteFile(at: item.url, in: folderURL)
             self.reload()
         }
     }

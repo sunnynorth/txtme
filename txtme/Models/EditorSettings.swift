@@ -14,6 +14,7 @@ final class EditorSettings {
     var isBold: Bool {
         didSet {
             UserDefaults.standard.set(isBold, forKey: boldKey)
+            UserDefaults.standard.synchronize()
             NotificationCenter.default.post(name: .editorSettingsChanged, object: nil)
         }
     }
@@ -22,6 +23,7 @@ final class EditorSettings {
         didSet {
             UserDefaults.standard.set(font.fontName, forKey: fontNameKey)
             UserDefaults.standard.set(Double(font.pointSize), forKey: fontSizeKey)
+            UserDefaults.standard.synchronize()
             NotificationCenter.default.post(name: .editorSettingsChanged, object: nil)
         }
     }

@@ -19,6 +19,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainWindowController?.flushPendingSave()
     }
 
+    /// Reached via the responder chain (NSApp -> its delegate) whenever the Font Panel's
+    /// selection changes, regardless of which window is currently key.
+    @objc func changeFont(_ sender: Any?) {
+        guard let fontManager = sender as? NSFontManager else { return }
+        EditorSettings.shared.font = fontManager.convert(EditorSettings.shared.font)
+    }
+
     private static func buildMainMenu(windowController: MainWindowController) -> NSMenu {
         let appName = ProcessInfo.processInfo.processName
         let mainMenu = NSMenu()
