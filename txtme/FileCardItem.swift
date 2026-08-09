@@ -6,19 +6,40 @@ protocol FileCardItemDelegate: AnyObject {
     func fileCardDidRequestReveal(_ item: TextFileItem)
 }
 
+/// NSColor -> CGColor is resolved once, at the moment it's assigned, using whatever appearance
+/// happens to be "current" at that point. Resolving it from an arbitrary callback (e.g.
+/// viewDidChangeEffectiveAppearance) is unreliable since that isn't guaranteed to be the
+/// view's own appearance. `updateLayer()` is the one hook AppKit calls during its actual
+/// display pass with the correct appearance pushed, so dynamic colors resolve correctly there.
+private final class AppearanceAwareView: NSView {
+    var backgroundColorProvider: (() -> NSColor)?
+    var borderColorProvider: (() -> NSColor)?
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        super.updateLayer()
+        layer?.backgroundColor = backgroundColorProvider?().cgColor
+        layer?.borderColor = borderColorProvider?().cgColor
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
+    }
+}
+
 final class FileCardItem: NSCollectionViewItem {
     static let identifier = NSUserInterfaceItemIdentifier("FileCardItem")
 
     weak var delegate: FileCardItemDelegate?
     private var fileItem: TextFileItem?
 
-    private let cardView: NSView = {
-        let view = NSView()
+    private let cardView: AppearanceAwareView = {
+        let view = AppearanceAwareView()
         view.wantsLayer = true
         view.layer?.cornerRadius = 10
-        view.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         view.layer?.borderWidth = 1
-        view.layer?.borderColor = NSColor.separatorColor.cgColor
         return view
     }()
 
@@ -55,6 +76,10 @@ final class FileCardItem: NSCollectionViewItem {
     override func loadView() {
         let root = NSView()
 
+        cardView.backgroundColorProvider = { .controlBackgroundColor }
+        cardView.borderColorProvider = { [weak self] in
+            (self?.isSelected ?? false) ? .controlAccentColor : .separatorColor
+        }
         cardView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         previewLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -88,8 +113,8 @@ final class FileCardItem: NSCollectionViewItem {
 
     override var isSelected: Bool {
         didSet {
-            cardView.layer?.borderColor = (isSelected ? NSColor.controlAccentColor : NSColor.separatorColor).cgColor
             cardView.layer?.borderWidth = isSelected ? 2 : 1
+            cardView.needsDisplay = true
         }
     }
 
