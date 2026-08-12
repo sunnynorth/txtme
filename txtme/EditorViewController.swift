@@ -4,6 +4,33 @@ protocol EditorViewControllerDelegate: AnyObject {
     func editorDidRequestBack()
 }
 
+private func leadingWhitespace(of line: String) -> String {
+    String(line.prefix { $0 == " " || $0 == "\t" })
+}
+
+/// If `line` starts with a list marker (numbered, lettered, or bulleted), returns the marker
+/// that should continue it on the next line. The marker is recognized whether or not a space
+/// has been typed after it yet, since Return is often pressed right after the punctuation.
+private func nextListMarker(for line: String) -> String? {
+    if line.range(of: #"^[-*•](\s+|$)"#, options: .regularExpression) != nil, let symbol = line.first {
+        return "\(symbol) "
+    }
+    if let match = line.range(of: #"^\d+[.)](\s+|$)"#, options: .regularExpression) {
+        let raw = line[match]
+        let digits = raw.prefix { $0.isNumber }
+        guard let number = Int(digits) else { return nil }
+        let separator = raw[digits.endIndex]
+        return "\(number + 1)\(separator) "
+    }
+    if let match = line.range(of: #"^[A-Za-z][.)](\s+|$)"#, options: .regularExpression) {
+        let raw = line[match]
+        guard let letter = raw.first, let asciiValue = letter.asciiValue else { return nil }
+        let separator = raw[raw.index(after: raw.startIndex)]
+        return "\(Character(Unicode.Scalar(asciiValue + 1)))\(separator) "
+    }
+    return nil
+}
+
 final class EditorViewController: NSViewController {
     weak var delegate: EditorViewControllerDelegate?
 
@@ -120,7 +147,8 @@ final class EditorViewController: NSViewController {
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
-        textView.isAutomaticSpellingCorrectionEnabled = true
+        textView.isContinuousSpellCheckingEnabled = true
+        textView.isAutomaticSpellingCorrectionEnabled = false
         textView.delegate = self
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
@@ -202,5 +230,36 @@ final class EditorViewController: NSViewController {
 extension EditorViewController: NSTextViewDelegate {
     func textDidChange(_ notification: Notification) {
         scheduleSave()
+    }
+
+    func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+        guard replacementString == "\n", affectedCharRange.length == 0 else { return true }
+        return handleReturnKey(in: textView, at: affectedCharRange)
+    }
+
+    /// Continues the current line's indentation, and if the line is a list item, its marker
+    /// (numbered, lettered, or bulleted) auto-incremented on the new line.
+    private func handleReturnKey(in textView: NSTextView, at range: NSRange) -> Bool {
+        let text = textView.string as NSString
+        let lineStart = text.lineRange(for: NSRange(location: range.location, length: 0)).location
+        let beforeCursorRange = NSRange(location: lineStart, length: range.location - lineStart)
+        let currentLine = text.substring(with: beforeCursorRange)
+
+        let indent = leadingWhitespace(of: currentLine)
+        let contentAfterIndent = String(currentLine.dropFirst(indent.count))
+
+        guard let marker = nextListMarker(for: contentAfterIndent) else {
+            guard !indent.isEmpty else { return true }
+            return replaceText(in: textView, range: range, with: "\n" + indent)
+        }
+
+        return replaceText(in: textView, range: range, with: "\n" + indent + marker)
+    }
+
+    private func replaceText(in textView: NSTextView, range: NSRange, with replacement: String) -> Bool {
+        guard textView.shouldChangeText(in: range, replacementString: replacement) else { return false }
+        textView.textStorage?.replaceCharacters(in: range, with: replacement)
+        textView.didChangeText()
+        return false
     }
 }
