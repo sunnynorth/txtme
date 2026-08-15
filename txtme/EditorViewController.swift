@@ -174,10 +174,52 @@ final class EditorViewController: NSViewController {
             name: .editorSettingsChanged,
             object: nil
         )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(focusModeChanged),
+            name: .focusModeChanged,
+            object: nil
+        )
     }
 
     @objc private func editorSettingsChanged() {
         textView.font = EditorSettings.shared.effectiveFont
+        if FocusModeState.shared.isEnabled {
+            updateFocusDimming()
+        }
+    }
+
+    @objc private func focusModeChanged() {
+        if FocusModeState.shared.isEnabled {
+            updateFocusDimming()
+        } else {
+            clearFocusDimming()
+        }
+    }
+
+    /// Dims every paragraph except the one containing the cursor, for distraction-free writing.
+    /// Purely visual (an NSAttributedString attribute) — never touches the saved plain-text content.
+    private func updateFocusDimming() {
+        guard let textStorage = textView.textStorage else { return }
+        let fullText = textView.string as NSString
+        guard fullText.length > 0 else { return }
+
+        let cursor = min(textView.selectedRange().location, fullText.length)
+        let activeRange = fullText.paragraphRange(for: NSRange(location: cursor, length: 0))
+        let fullRange = NSRange(location: 0, length: fullText.length)
+        let dimColor = NSColor.textColor.withAlphaComponent(0.25)
+
+        textStorage.beginEditing()
+        textStorage.addAttribute(.foregroundColor, value: dimColor, range: fullRange)
+        textStorage.addAttribute(.foregroundColor, value: NSColor.textColor, range: activeRange)
+        textStorage.endEditing()
+    }
+
+    private func clearFocusDimming() {
+        guard let textStorage = textView.textStorage else { return }
+        let fullRange = NSRange(location: 0, length: (textView.string as NSString).length)
+        guard fullRange.length > 0 else { return }
+        textStorage.addAttribute(.foregroundColor, value: NSColor.textColor, range: fullRange)
     }
 
     func open(url: URL, folder: ImportedFolder) {
@@ -188,6 +230,9 @@ final class EditorViewController: NSViewController {
         textView.string = resolvedFolderURL.map { TextFileManager.read(url, in: $0) } ?? ""
         let modDate = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
         updateStatus(date: modDate)
+        if FocusModeState.shared.isEnabled {
+            updateFocusDimming()
+        }
         view.window?.makeFirstResponder(textView)
     }
 
@@ -230,6 +275,15 @@ final class EditorViewController: NSViewController {
 extension EditorViewController: NSTextViewDelegate {
     func textDidChange(_ notification: Notification) {
         scheduleSave()
+        if FocusModeState.shared.isEnabled {
+            updateFocusDimming()
+        }
+    }
+
+    func textViewDidChangeSelection(_ notification: Notification) {
+        if FocusModeState.shared.isEnabled {
+            updateFocusDimming()
+        }
     }
 
     func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {

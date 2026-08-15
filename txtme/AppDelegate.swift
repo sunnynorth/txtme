@@ -5,7 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let windowController = MainWindowController()
-        NSApp.mainMenu = Self.buildMainMenu(windowController: windowController)
+        NSApp.mainMenu = buildMainMenu(windowController: windowController)
         windowController.showWindow(nil)
         windowController.window?.makeKeyAndOrderFront(nil)
         mainWindowController = windowController
@@ -26,7 +26,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         EditorSettings.shared.font = fontManager.convert(EditorSettings.shared.font)
     }
 
-    private static func buildMainMenu(windowController: MainWindowController) -> NSMenu {
+    @objc func showCommandPalette(_ sender: Any?) {
+        guard let windowController = mainWindowController else { return }
+        CommandPaletteController.shared.present(commands: buildPaletteCommands(windowController: windowController))
+    }
+
+    @objc func toggleFocusModeAction(_ sender: Any?) {
+        FocusModeState.shared.toggle()
+    }
+
+    private func buildPaletteCommands(windowController: MainWindowController) -> [PaletteCommand] {
+        [
+            PaletteCommand(title: "New Text File", shortcut: "\u{2318}N") {
+                windowController.newTextFileMenuAction(nil)
+            },
+            PaletteCommand(title: "Import Folder\u{2026}", shortcut: "\u{21e7}\u{2318}O") {
+                windowController.importFolderMenuAction(nil)
+            },
+            PaletteCommand(title: "Toggle Bold Default Text", shortcut: nil) {
+                EditorSettings.shared.isBold.toggle()
+            },
+            PaletteCommand(title: "Select Font\u{2026}", shortcut: nil) {
+                NSFontManager.shared.setSelectedFont(EditorSettings.shared.font, isMultiple: false)
+                NSFontManager.shared.orderFrontFontPanel(nil)
+            },
+            PaletteCommand(title: "Toggle nvALT Style Notes List", shortcut: nil) {
+                NotesListSettings.shared.useNvaltStyle.toggle()
+            },
+            PaletteCommand(title: "Settings\u{2026}", shortcut: "\u{2318},") {
+                SettingsWindowController.shared.openSettings(nil)
+            },
+            PaletteCommand(title: "Toggle Focus Mode", shortcut: "\u{21e7}\u{2318}F") {
+                FocusModeState.shared.toggle()
+            },
+        ]
+    }
+
+    private func buildMainMenu(windowController: MainWindowController) -> NSMenu {
         let appName = ProcessInfo.processInfo.processName
         let mainMenu = NSMenu()
 
@@ -89,6 +125,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         spellingMenu.addItem(withTitle: "Check Spelling While Typing", action: #selector(NSTextView.toggleContinuousSpellChecking(_:)), keyEquivalent: "")
         spellingItem.submenu = spellingMenu
         editMenu.addItem(spellingItem)
+
+        let viewMenuItem = NSMenuItem()
+        mainMenu.addItem(viewMenuItem)
+        let viewMenu = NSMenu(title: "View")
+        viewMenuItem.submenu = viewMenu
+
+        let paletteItem = NSMenuItem(title: "Command Palette\u{2026}", action: #selector(AppDelegate.showCommandPalette(_:)), keyEquivalent: "k")
+        paletteItem.target = self
+        viewMenu.addItem(paletteItem)
+
+        let focusItem = NSMenuItem(title: "Toggle Focus Mode", action: #selector(AppDelegate.toggleFocusModeAction(_:)), keyEquivalent: "f")
+        focusItem.keyEquivalentModifierMask = [.command, .shift]
+        focusItem.target = self
+        viewMenu.addItem(focusItem)
 
         let windowMenuItem = NSMenuItem()
         mainMenu.addItem(windowMenuItem)

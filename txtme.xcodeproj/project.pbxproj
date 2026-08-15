@@ -21,6 +21,8 @@
 		6C38939E784795E6596EC76E /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21A4F6899DEF0447197F734C /* SettingsWindowController.swift */; };
 		B515C88FBE0C677D29042AD7 /* NotesListSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87455D9DCCF39A061EAA71 /* NotesListSettings.swift */; };
 		E59FAA7F3FB5532F1319C155 /* NotesListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F315834A9C9E98BF67DCB3A /* NotesListViewController.swift */; };
+		18C47E8B7774FC66349AD10E /* FocusModeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311658BC10A1DC3AEBEE7775 /* FocusModeState.swift */; };
+		7FCED8AE539F7666B90F238E /* CommandPaletteController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C2EAF263721813AC1A24C40 /* CommandPaletteController.swift */; };
 		C4C9630ED4205FE01406601C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BD487FFB60A8CAB680A773A6 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +41,8 @@
 		21A4F6899DEF0447197F734C /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		5F87455D9DCCF39A061EAA71 /* NotesListSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesListSettings.swift; sourceTree = "<group>"; };
 		7F315834A9C9E98BF67DCB3A /* NotesListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesListViewController.swift; sourceTree = "<group>"; };
+		311658BC10A1DC3AEBEE7775 /* FocusModeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeState.swift; sourceTree = "<group>"; };
+		1C2EAF263721813AC1A24C40 /* CommandPaletteController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPaletteController.swift; sourceTree = "<group>"; };
 		BD487FFB60A8CAB680A773A6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		30A6C710ACF5EB533C8A10A7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7AC3B78EECBA3D6456E478FE /* txtme.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = txtme.entitlements; sourceTree = "<group>"; };
@@ -77,6 +81,7 @@
 				61A45C79BA973557D020D30E /* EditorViewController.swift */,
 				21A4F6899DEF0447197F734C /* SettingsWindowController.swift */,
 				7F315834A9C9E98BF67DCB3A /* NotesListViewController.swift */,
+				1C2EAF263721813AC1A24C40 /* CommandPaletteController.swift */,
 				78538AF16C73B91FFD5C4FF7 /* Models */,
 				BD487FFB60A8CAB680A773A6 /* Assets.xcassets */,
 				30A6C710ACF5EB533C8A10A7 /* Info.plist */,
@@ -92,6 +97,7 @@
 				0A7A82D87DE760032A49F142 /* TextFileItem.swift */,
 				00033BCE03EF82ED68DF0695 /* EditorSettings.swift */,
 				5F87455D9DCCF39A061EAA71 /* NotesListSettings.swift */,
+				311658BC10A1DC3AEBEE7775 /* FocusModeState.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -187,6 +193,8 @@
 				6C38939E784795E6596EC76E /* SettingsWindowController.swift in Sources */,
 				B515C88FBE0C677D29042AD7 /* NotesListSettings.swift in Sources */,
 				E59FAA7F3FB5532F1319C155 /* NotesListViewController.swift in Sources */,
+				18C47E8B7774FC66349AD10E /* FocusModeState.swift in Sources */,
+				7FCED8AE539F7666B90F238E /* CommandPaletteController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

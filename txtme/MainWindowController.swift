@@ -4,6 +4,7 @@ final class MainWindowController: NSWindowController {
     private let splitViewController = NSSplitViewController()
     private let sidebarVC = SidebarViewController()
     private let contentVC = ContentViewController()
+    private var sidebarItem: NSSplitViewItem!
 
     private var selectedFolder: ImportedFolder?
 
@@ -35,6 +36,7 @@ final class MainWindowController: NSWindowController {
         sidebarItem.minimumThickness = 200
         sidebarItem.maximumThickness = 320
         sidebarItem.canCollapse = true
+        self.sidebarItem = sidebarItem
 
         let contentItem = NSSplitViewItem(viewController: contentVC)
 
@@ -45,6 +47,17 @@ final class MainWindowController: NSWindowController {
         window?.contentViewController = splitViewController
 
         sidebarVC.reload()
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(focusModeChanged),
+            name: .focusModeChanged,
+            object: nil
+        )
+    }
+
+    @objc private func focusModeChanged() {
+        sidebarItem.animator().isCollapsed = FocusModeState.shared.isEnabled
     }
 
     func flushPendingSave() {
